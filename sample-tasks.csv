@@ -1,0 +1,12 @@
+title,description,status,priority,due_date,assignee_id,estimated_hours,tags
+Implement user authentication,Add JWT-based authentication to the API,TODO,HIGH,2025-11-15 10:00:00,1,8,backend;security
+Design database schema,Create ER diagram and database schema,IN_PROGRESS,MEDIUM,2025-11-10 15:00:00,2,4,database;design
+Write unit tests,Add comprehensive unit tests for services,TODO,MEDIUM,2025-11-20 12:00:00,1,6,testing;quality
+Setup CI/CD pipeline,Configure GitHub Actions for automated deployment,TODO,HIGH,2025-11-12 09:00:00,3,5,devops;automation
+Create API documentation,Document all REST endpoints using Swagger,IN_PROGRESS,LOW,2025-11-25 14:00:00,2,3,documentation
+Implement caching layer,Add Redis caching for improved performance,TODO,MEDIUM,2025-11-18 11:00:00,1,7,performance;backend
+Code review,Review pull requests from team members,TODO,LOW,2025-11-08 16:00:00,3,2,review;quality
+Optimize database queries,Improve query performance and add indexes,TODO,HIGH,2025-11-14 10:00:00,2,5,database;performance
+Setup monitoring,Configure Prometheus and Grafana,TODO,MEDIUM,2025-11-22 13:00:00,3,4,monitoring;devops
+Security audit,Perform security assessment of the application,TODO,CRITICAL,2025-11-16 09:00:00,1,6,security;audit
+

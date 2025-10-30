@@ -1,8 +1,8 @@
 package com.taskmanagement.service;
 
 import com.taskmanagement.event.NotificationMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -11,12 +11,17 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
 
-    private final JavaMailSender mailSender;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
     private final KafkaTemplate<String, NotificationMessage> kafkaTemplate;
+
+    public NotificationService(KafkaTemplate<String, NotificationMessage> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     @Value("${app.notification.kafka.topic.notifications:notifications}")
     private String notificationTopic;
@@ -47,6 +52,11 @@ public class NotificationService {
 
     @Async
     public void sendEmail(NotificationMessage notification) {
+        if (mailSender == null) {
+            log.warn("JavaMailSender is not configured. Email notification will not be sent to: {}", notification.getRecipient());
+            return;
+        }
+
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setTo(notification.getRecipient());

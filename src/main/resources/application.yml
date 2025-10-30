@@ -1,7 +1,7 @@
 spring:
   application:
     name: task-management-notification-system
-  
+
   # Database Configuration
   datasource:
     url: jdbc:postgresql://localhost:5432/taskmanagement
@@ -12,6 +12,11 @@ spring:
       maximum-pool-size: 10
       minimum-idle: 5
       connection-timeout: 30000
+
+# JWT Configuration
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm
+  expiration: 86400000  # 24 hours in milliseconds
   
   # JPA Configuration
   jpa:

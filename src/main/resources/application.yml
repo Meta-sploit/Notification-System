@@ -13,11 +13,6 @@ spring:
       minimum-idle: 5
       connection-timeout: 30000
 
-# JWT Configuration
-jwt:
-  secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm
-  expiration: 86400000  # 24 hours in milliseconds
-  
   # JPA Configuration
   jpa:
     hibernate:
@@ -29,14 +24,14 @@ jwt:
         format_sql: true
         use_sql_comments: true
     open-in-view: false
-  
+
   # File Upload Configuration
   servlet:
     multipart:
       enabled: true
       max-file-size: 10MB
       max-request-size: 10MB
-  
+
   # Kafka Configuration
   kafka:
     bootstrap-servers: localhost:9092
@@ -50,7 +45,7 @@ jwt:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-  
+
   # Mail Configuration
   mail:
     host: smtp.gmail.com
@@ -64,12 +59,17 @@ jwt:
           starttls:
             enable: true
             required: true
-  
+
   # Security Configuration
   security:
     user:
       name: admin
       password: admin123
+
+# JWT Configuration
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationThatIsAtLeast256BitsLongForHS256Algorithm
+  expiration: 86400000  # 24 hours in milliseconds
 
 # Server Configuration
 server:

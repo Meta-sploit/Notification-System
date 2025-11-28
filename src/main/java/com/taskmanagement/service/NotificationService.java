@@ -1,27 +1,24 @@
 package com.taskmanagement.service;
 
 import com.taskmanagement.event.NotificationMessage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * Notification Service - Kafka Producer
+ * This service publishes notification messages to Kafka.
+ * The actual notification sending (email, SMS, etc.) is handled by NotificationConsumerService.
+ */
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
 
-    @Autowired(required = false)
-    private JavaMailSender mailSender;
-
-    private final KafkaTemplate<String, NotificationMessage> kafkaTemplate;
-
-    public NotificationService(KafkaTemplate<String, NotificationMessage> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
+    private final KafkaTemplate<String, NotificationMessage> notificationKafkaTemplate;
 
     @Value("${app.notification.kafka.topic.notifications:notifications}")
     private String notificationTopic;
@@ -29,6 +26,12 @@ public class NotificationService {
     @Value("${app.notification.enabled:true}")
     private boolean notificationsEnabled;
 
+    /**
+     * Publish notification message to Kafka.
+     * The message will be consumed by NotificationConsumerService which handles actual delivery.
+     *
+     * @param notification The notification message to publish
+     */
     @Async
     public void sendNotification(NotificationMessage notification) {
         if (!notificationsEnabled) {
@@ -36,37 +39,27 @@ public class NotificationService {
             return;
         }
 
-        log.info("Sending notification: {} to {}", notification.getType(), notification.getRecipient());
-
-        // Send to Kafka for processing
-        try {
-            kafkaTemplate.send(notificationTopic, notification);
-            log.info("Notification sent to Kafka topic: {}", notificationTopic);
-        } catch (Exception e) {
-            log.error("Failed to send notification to Kafka: {}", e.getMessage(), e);
-        }
-
-        // Also send email directly
-        sendEmail(notification);
-    }
-
-    @Async
-    public void sendEmail(NotificationMessage notification) {
-        if (mailSender == null) {
-            log.warn("JavaMailSender is not configured. Email notification will not be sent to: {}", notification.getRecipient());
-            return;
-        }
+        log.info("📤 Publishing notification to Kafka: {} to {}",
+                notification.getType(), notification.getRecipient());
 
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(notification.getRecipient());
-            message.setSubject(notification.getSubject());
-            message.setText(notification.getMessage());
+            // Publish to Kafka - consumer will handle actual sending
+            notificationKafkaTemplate.send(notificationTopic, notification)
+                    .whenComplete((result, ex) -> {
+                        if (ex == null) {
+                            log.info("✅ Notification published to Kafka topic '{}': {} for task ID: {}",
+                                    notificationTopic, notification.getType(), notification.getTaskId());
+                        } else {
+                            log.error("❌ Failed to publish notification to Kafka: {}", ex.getMessage(), ex);
+                        }
+                    });
 
-            mailSender.send(message);
-            log.info("Email sent successfully to: {}", notification.getRecipient());
         } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", notification.getRecipient(), e.getMessage(), e);
+            log.error("❌ Exception while publishing notification to Kafka: {}", e.getMessage(), e);
+            // In production, you might want to:
+            // 1. Store failed notifications in database for retry
+            // 2. Send alert to monitoring system
+            // 3. Fall back to direct email sending
         }
     }
 }

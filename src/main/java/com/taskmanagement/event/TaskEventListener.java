@@ -4,12 +4,23 @@ import com.taskmanagement.model.Task;
 import com.taskmanagement.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.time.LocalDateTime;
 
+/**
+ * TaskEventListener - Handles task events and publishes notifications to Kafka.
+ *
+ * IMPORTANT: Uses @TransactionalEventListener instead of @EventListener to ensure:
+ * 1. Events are only processed AFTER the database transaction commits successfully
+ * 2. No notifications are sent if the transaction rolls back
+ * 3. Listeners can safely read committed data from the database
+ *
+ * Phase: AFTER_COMMIT - Listener executes only after successful transaction commit
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -17,10 +28,21 @@ public class TaskEventListener {
 
     private final NotificationService notificationService;
 
+    /**
+     * Handle task events after transaction commits.
+     *
+     * @TransactionalEventListener with AFTER_COMMIT ensures:
+     * - Event is processed ONLY if transaction commits successfully
+     * - If transaction rolls back, this listener will NOT execute
+     * - Database changes are visible to this listener
+     *
+     * @Async ensures non-blocking execution in a separate thread
+     */
     @Async
-    @EventListener
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleTaskEvent(TaskEvent event) {
-        log.info("Handling task event: {} for task ID: {}", event.getEventType(), event.getTask().getId());
+        log.info("✅ Transaction committed - Handling task event: {} for task ID: {}",
+                event.getEventType(), event.getTask().getId());
 
         Task task = event.getTask();
 
